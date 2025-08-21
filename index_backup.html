@@ -1,0 +1,1422 @@
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Voice Conversation AI - Complete Chat</title>
+  <style>
+    body { 
+      font-family: system-ui, Arial; 
+      max-width: 800px; 
+      margin: 20px auto; 
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .controls {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    button { 
+      padding: 15px 25px; 
+      border-radius: 50px; 
+      border: none; 
+      cursor: pointer; 
+      font-size: 16px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      backdrop-filter: blur(5px);
+    }
+    button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .status {
+      text-align: center;
+      font-size: 18px;
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .listening {
+      animation: pulse 1.5s infinite;
+      background: rgba(46, 213, 115, 0.3) !important;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    .log { 
+      margin-top: 20px; 
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      max-height: 400px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+    .message {
+      margin: 15px 0;
+      padding: 10px 15px;
+      border-radius: 15px;
+      word-wrap: break-word;
+    }
+    .user-message {
+      background: rgba(116, 185, 255, 0.3);
+      margin-left: 20px;
+      border-bottom-right-radius: 5px;
+    }
+    .ai-message {
+      background: rgba(46, 213, 115, 0.3);
+      margin-right: 20px;
+      border-bottom-left-radius: 5px;
+    }
+    .voice-settings {
+      margin: 20px 0;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+    }
+    .voice-settings label {
+      display: block;
+      margin: 10px 0 5px 0;
+      font-weight: bold;
+    }
+    .voice-settings select, .voice-settings input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      margin-bottom: 10px;
+    }
+    .voice-settings option {
+      background: #333;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎤 MML Restaurant Booking System</h1>
+    
+    <div class="voice-settings">
+      <label for="voiceSelect">🔊 AI Voice:</label>
+      <select id="voiceSelect"></select>
+      <button id="testVoice">🔊 Test Voice</button>
+      
+      <label for="speedRange">⚡ Speech Speed:</label>
+      <input type="range" id="speedRange" min="0.5" max="2" step="0.1" value="1">
+      
+      <label for="pitchRange">🎵 Voice Pitch:</label>
+      <input type="range" id="pitchRange" min="0" max="2" step="0.1" value="1">
+    </div>
+
+    <div class="controls">
+      <button id="micTest">🎤 Test Microphone</button>
+      <button id="start">🎤 Make Reservation</button>
+      <button id="stop" disabled>⏹️ End Call</button>
+      <button id="clear">🗑️ Clear Chat</button>
+    </div>
+
+    <div class="status" id="status">Welcome to MML Restaurant! Click "Make Reservation" to book your table.</div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    let recognition;
+    let isListening = false;
+    let voices = [];
+    let conversationHistory = [];
+    
+    // MML Restaurant Reservation System
+    let reservationStep = 0;
+    let customerData = {
+      name: null,
+      date: null,
+      time: null,
+      members: null,
+      specialRequests: null
+    };
+
+    // Reservation conversation steps
+    const RESERVATION_STEPS = {
+      GREETING: 0,
+      NAME: 1,
+      DATE: 2, 
+      TIME: 3,
+      MEMBERS: 4,
+      SPECIAL_REQUESTS: 5,
+      CONFIRMATION: 6,
+      COMPLETE: 7
+    };
+    
+    // Enhanced voice loading with error handling
+    function loadVoices() {
+      try {
+        voices = speechSynthesis.getVoices();
+        const voiceSelect = document.getElementById('voiceSelect');
+        
+        if (!voiceSelect) {
+          console.error('Voice select element not found');
+          return;
+        }
+        
+        voiceSelect.innerHTML = '';
+        
+        if (voices.length === 0) {
+          const option = document.createElement('option');
+          option.value = -1;
+          option.textContent = 'Loading voices...';
+          voiceSelect.appendChild(option);
+          
+          // Try again after a delay
+          setTimeout(loadVoices, 100);
+          return;
+        }
+        
+        voices.forEach((voice, index) => {
+          const option = document.createElement('option');
+          option.value = index;
+          option.textContent = `${voice.name} (${voice.lang})`;
+          
+          // PRIORITY SELECTION: Female voices first
+          const isFemaleVoice = voice.name.toLowerCase().includes('female') ||
+            voice.name.toLowerCase().includes('woman') ||
+            voice.name.toLowerCase().includes('sara') ||
+            voice.name.toLowerCase().includes('emma') ||
+            voice.name.toLowerCase().includes('zira') ||
+            voice.name.toLowerCase().includes('hazel') ||
+            voice.name.toLowerCase().includes('samantha') ||
+            voice.name.toLowerCase().includes('karen') ||
+            voice.name.toLowerCase().includes('susan') ||
+            voice.name.toLowerCase().includes('anna') ||
+            voice.name.toLowerCase().includes('eva');
+          
+          // Select female voices first, then English high-quality voices
+          if (voice.lang.startsWith('en') && (
+            isFemaleVoice ||
+            voice.name.includes('Google') || 
+            voice.name.includes('Microsoft') ||
+            voice.name.includes('Natural') ||
+            voice.default
+          )) {
+            option.selected = true;
+            option.textContent += ' ⭐ RECOMMENDED';
+          }
+          
+          voiceSelect.appendChild(option);
+        });
+        
+        console.log(`Loaded ${voices.length} voices`);
+        
+      } catch (error) {
+        console.error('Error loading voices:', error);
+      }
+    }
+
+    // Load voices when available
+    speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    // Test Selected Voice Function
+    const testSelectedVoice = () => {
+      const voiceSelect = document.getElementById('voiceSelect');
+      const selectedIndex = voiceSelect.value;
+      
+      if (selectedIndex >= 0 && voices[selectedIndex]) {
+        const selectedVoice = voices[selectedIndex];
+        log(`🔊 Testing voice: ${selectedVoice.name}`, false);
+        speakClearly("Hello! I'm your MML Restaurant booking assistant. This is how I sound when taking your reservation. Do you like this voice?");
+      } else {
+        log('❌ Please select a voice first', false);
+      }
+    };
+
+    // Enhanced logging function
+    const log = (message, isUser = false) => {
+      const logDiv = document.getElementById("log");
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+      messageDiv.innerHTML = `<strong>${isUser ? '👤 You:' : '🤖 AI:'}</strong> ${message}`;
+      logDiv.appendChild(messageDiv);
+      logDiv.scrollTop = logDiv.scrollHeight;
+      
+      // Add to conversation history
+      conversationHistory.push({
+        role: isUser ? 'user' : 'assistant',
+        content: message,
+        timestamp: new Date().toISOString()
+      });
+    };
+
+    // Enhanced speak function with voice settings and error handling
+    const speak = (text) => {
+      if (!('speechSynthesis' in window)) {
+        console.warn('Speech synthesis not supported');
+        log('🔇 Text-to-speech not supported in this browser', false);
+        return;
+      }
+      
+      try {
+        // Stop any current speech
+        speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Apply voice settings safely
+        const voiceSelect = document.getElementById('voiceSelect');
+        const selectedVoiceIndex = voiceSelect ? voiceSelect.value : 0;
+        if (voices && voices[selectedVoiceIndex]) {
+          utterance.voice = voices[selectedVoiceIndex];
+        }
+        
+        const speedRange = document.getElementById('speedRange');
+        const pitchRange = document.getElementById('pitchRange');
+        
+        utterance.rate = speedRange ? parseFloat(speedRange.value) : 1;
+        utterance.pitch = pitchRange ? parseFloat(pitchRange.value) : 1;
+        utterance.volume = 0.9;
+        
+        // Add speech events
+        utterance.onstart = () => {
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            statusEl.textContent = '🗣️ AI is speaking...';
+            statusEl.className = 'status';
+          }
+        };
+        
+        utterance.onend = () => {
+          const statusEl = document.getElementById('status');
+          if (isListening && statusEl) {
+            statusEl.textContent = '🎧 Listening for your response...';
+            statusEl.className = 'status listening';
+            setTimeout(() => startListening(), 100);
+          } else if (statusEl) {
+            statusEl.textContent = 'Ready to chat!';
+            statusEl.className = 'status';
+          }
+        };
+        
+        utterance.onerror = (e) => {
+          console.error('Speech synthesis error:', e);
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            statusEl.textContent = 'Speech error occurred - continuing without voice';
+            statusEl.className = 'status';
+          }
+          // Continue without voice if speech fails
+          if (isListening) {
+            setTimeout(() => startListening(), 200);
+          }
+        };
+        
+        speechSynthesis.speak(utterance);
+        
+      } catch (error) {
+        console.error('Speech synthesis error:', error);
+        log('🔇 Voice output failed, continuing with text only', false);
+        
+        // Continue the conversation even if speech fails
+        if (isListening) {
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            statusEl.textContent = '🎧 Listening (voice output disabled)...';
+            statusEl.className = 'status listening';
+          }
+          setTimeout(() => startListening(), 200);
+        }
+      }
+    };
+
+    // ENHANCED Speech Function - Crystal Clear AI Voice
+    const speakClearly = (text) => {
+      if (!('speechSynthesis' in window)) {
+        console.warn('Speech synthesis not supported');
+        log('🔇 Text-to-speech not supported in this browser', false);
+        return;
+      }
+      
+      try {
+        // Stop any current speech IMMEDIATELY
+        speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // GUARANTEED FEMALE voice selection - always choose a working voice
+        const voiceSelect = document.getElementById('voiceSelect');
+        const selectedVoiceIndex = voiceSelect ? voiceSelect.value : 0;
+        
+        // ENSURE we have voices loaded
+        if (!voices || voices.length === 0) {
+          voices = speechSynthesis.getVoices();
+        }
+        
+        // SMART voice selection with FEMALE preference
+        if (voices && voices.length > 0) {
+          let bestVoice = null;
+          
+          // Priority 1: Try selected voice from dropdown
+          if (selectedVoiceIndex >= 0 && voices[selectedVoiceIndex]) {
+            bestVoice = voices[selectedVoiceIndex];
+          }
+          
+          // Priority 2: Find FEMALE voices (contains common female voice names)
+          if (!bestVoice) {
+            const femaleVoices = voices.filter(voice => 
+              voice.name.toLowerCase().includes('female') ||
+              voice.name.toLowerCase().includes('woman') ||
+              voice.name.toLowerCase().includes('sara') ||
+              voice.name.toLowerCase().includes('emma') ||
+              voice.name.toLowerCase().includes('zira') ||
+              voice.name.toLowerCase().includes('hazel') ||
+              voice.name.toLowerCase().includes('samantha') ||
+              voice.name.toLowerCase().includes('karen') ||
+              voice.name.toLowerCase().includes('susan') ||
+              voice.name.toLowerCase().includes('anna') ||
+              voice.name.toLowerCase().includes('eva')
+            );
+            
+            if (femaleVoices.length > 0) {
+              bestVoice = femaleVoices[0];
+            }
+          }
+          
+          // Priority 3: High-quality voices (Google/Microsoft)
+          if (!bestVoice) {
+            const highQualityVoices = voices.filter(voice => 
+              voice.name.includes('Google') || 
+              voice.name.includes('Microsoft') || 
+              voice.name.includes('Neural') ||
+              voice.name.includes('Natural')
+            );
+            
+            if (highQualityVoices.length > 0) {
+              bestVoice = highQualityVoices[0];
+            }
+          }
+          
+          // Priority 4: Any English voice
+          if (!bestVoice) {
+            const englishVoices = voices.filter(voice => voice.lang.startsWith('en'));
+            if (englishVoices.length > 0) {
+              bestVoice = englishVoices[0];
+            }
+          }
+          
+          // Priority 5: Default to first available voice
+          if (!bestVoice) {
+            bestVoice = voices[0];
+          }
+          
+          utterance.voice = bestVoice;
+          console.log(`🔊 Using voice: ${bestVoice.name} (${bestVoice.lang})`);
+        }
+        
+        // OPTIMAL settings for FEMALE restaurant booking voice
+        utterance.rate = 0.85;    // Slightly slower for elegant feminine clarity
+        utterance.pitch = 1.1;    // Higher pitch for natural feminine tone
+        utterance.volume = 1.0;   // Maximum volume
+        
+        // Override with user preferences if available
+        const speedRange = document.getElementById('speedRange');
+        const pitchRange = document.getElementById('pitchRange');
+        if (speedRange) utterance.rate = parseFloat(speedRange.value) * 0.9;
+        if (pitchRange) utterance.pitch = parseFloat(pitchRange.value);
+        
+        // ENHANCED speech events for seamless conversation
+        utterance.onstart = () => {
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            statusEl.textContent = '🗣️ MML Restaurant speaking clearly...';
+            statusEl.className = 'status';
+          }
+        };
+        
+        utterance.onend = () => {
+          // IMMEDIATE return to listening - CONTINUOUS conversation
+          if (isListening) {
+            const statusEl = document.getElementById('status');
+            if (statusEl) {
+              statusEl.textContent = '🎧 Ready to hear you - Please speak naturally...';
+              statusEl.className = 'status listening';
+            }
+            // NO delays - instant listening
+            setTimeout(() => {
+              if (isListening && recognition) {
+                try {
+                  recognition.start();
+                } catch (e) {
+                  console.log('Recognition continues automatically');
+                }
+              }
+            }, 50);
+          }
+        };
+        
+        utterance.onerror = (e) => {
+          console.error('Speech synthesis error:', e);
+          // NEVER stop listening even if speech fails
+          if (isListening) {
+            const statusEl = document.getElementById('status');
+            if (statusEl) {
+              statusEl.textContent = '🎧 Continuing to listen...';
+              statusEl.className = 'status listening';
+            }
+            setTimeout(() => {
+              if (isListening && recognition) {
+                try {
+                  recognition.start();
+                } catch (e) {
+                  console.log('Recognition continues despite voice error');
+                }
+              }
+            }, 50);
+          }
+        };
+        
+        // Speak with enhanced clarity
+        speechSynthesis.speak(utterance);
+        
+      } catch (error) {
+        console.error('Enhanced speech synthesis error:', error);
+        log('🔇 Voice output failed, continuing with text only', false);
+        
+        // ALWAYS continue the conversation
+        if (isListening) {
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            statusEl.textContent = '🎧 Ready to continue - Please speak...';
+            statusEl.className = 'status listening';
+          }
+          setTimeout(() => {
+            if (isListening && recognition) {
+              try {
+                recognition.start();
+              } catch (e) {
+                console.log('Recognition continues in text mode');
+              }
+            }
+          }, 50);
+        }
+      }
+    };
+
+    // MML Restaurant Booking AI Response Generator
+    const generateAIResponse = (userInput) => {
+      const input = userInput.toLowerCase().trim();
+      
+      // Check for thank you - auto end call
+      if (input.match(/\b(thank you|thanks|thank|cheers|appreciate)\b/)) {
+        stopListening();
+        return "Thank you for choosing MML Restaurant! Your reservation is confirmed. We look forward to serving you. Have a wonderful day! Goodbye!";
+      }
+      
+      // Handle based on current reservation step
+      switch (reservationStep) {
+        case RESERVATION_STEPS.GREETING:
+          reservationStep = RESERVATION_STEPS.NAME;
+          return "Hello and welcome to MML Restaurant! I'm your voice reservation assistant. To book your table, may I please have your name?";
+          
+        case RESERVATION_STEPS.NAME:
+          const extractedName = extractName(input);
+          if (extractedName) {
+            customerData.name = extractedName;
+            reservationStep = RESERVATION_STEPS.DATE;
+            return `Perfect, ${extractedName}! Now, what date would you like to make your reservation? You can say today, tomorrow, or a specific date.`;
+          } else {
+            return "I didn't catch your name clearly. Could you please tell me your name again?";
+          }
+          
+        case RESERVATION_STEPS.DATE:
+          const extractedDate = extractDate(input);
+          if (extractedDate) {
+            customerData.date = extractedDate;
+            reservationStep = RESERVATION_STEPS.TIME;
+            return `Great! ${extractedDate} it is. What time would you prefer for your reservation? We're open from 5 PM to 11 PM.`;
+          } else {
+            return "I'd love to help you with any date! Could you please tell me what date you'd like to dine with us? You can say today, tomorrow, May 19, April 20, or any date you prefer.";
+          }
+          
+        case RESERVATION_STEPS.TIME:
+          const extractedTime = extractTime(input);
+          if (extractedTime) {
+            customerData.time = extractedTime;
+            reservationStep = RESERVATION_STEPS.MEMBERS;
+            return `Excellent! ${extractedTime} on ${customerData.date}. How many people will be joining you for dinner?`;
+          } else {
+            return "I can accommodate any time! What time works best for you? You can say 7 PM, 7.0 p.m., seven o'clock, or any time you prefer.";
+          }
+          
+        case RESERVATION_STEPS.MEMBERS:
+          const extractedMembers = extractMembers(input);
+          if (extractedMembers) {
+            customerData.members = extractedMembers;
+            reservationStep = RESERVATION_STEPS.SPECIAL_REQUESTS;
+            return `Perfect! Table for ${extractedMembers} people. Do you have any special requests? Perhaps dietary requirements, celebrating a special occasion, or preference for seating?`;
+          } else {
+            return "I didn't get the number of people. How many members will be dining with you?";
+          }
+          
+        case RESERVATION_STEPS.SPECIAL_REQUESTS:
+          customerData.specialRequests = input || "No special requests";
+          reservationStep = RESERVATION_STEPS.CONFIRMATION;
+          return `Thank you! Let me confirm your reservation at MML Restaurant: ${customerData.name} for ${customerData.members} people on ${customerData.date} at ${customerData.time}. Special requests: ${customerData.specialRequests}. Is this correct?`;
+          
+        case RESERVATION_STEPS.CONFIRMATION:
+          if (input.match(/\b(yes|correct|right|confirm|ok|okay|sure)\b/)) {
+            reservationStep = RESERVATION_STEPS.COMPLETE;
+            return `Wonderful! Your reservation is confirmed. We'll see you at MML Restaurant on ${customerData.date} at ${customerData.time}. We can't wait to serve you! Is there anything else I can help you with?`;
+          } else if (input.match(/\b(no|wrong|change|modify)\b/)) {
+            reservationStep = RESERVATION_STEPS.NAME;
+            customerData = { name: null, date: null, time: null, members: null, specialRequests: null };
+            return "No problem! Let's start over. May I have your name please?";
+          } else {
+            return "Please say 'yes' to confirm your reservation or 'no' if you'd like to make changes.";
+          }
+          
+        case RESERVATION_STEPS.COMPLETE:
+          if (input.match(/\b(bye|goodbye|no|nothing)\b/)) {
+            stopListening();
+            return "Thank you for choosing MML Restaurant! Have a wonderful day and we'll see you soon!";
+          } else {
+            return "How else can I assist you with your reservation today?";
+          }
+          
+        default:
+          reservationStep = RESERVATION_STEPS.GREETING;
+          return "Welcome to MML Restaurant! How may I help you with your reservation today?";
+      }
+    };
+
+    // Extract name from user input
+    function extractName(input) {
+      const namePatterns = [
+        /(?:my name is|i'm|i am|this is|call me|name's)\s+([a-zA-Z][a-zA-Z\s]{1,30})/i,
+        /^([A-Z][a-zA-Z\s]{1,30})$/,
+        /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/
+      ];
+      
+      for (const pattern of namePatterns) {
+        const match = input.match(pattern);
+        if (match) {
+          let name = match[1].trim();
+          // Filter out common non-name words
+          if (!name.match(/\b(reservation|table|book|today|tomorrow|restaurant|want|need|time|date)\b/i) && name.length >= 2) {
+            return name;
+          }
+        }
+      }
+      return null;
+    }
+
+    // Extract date from user input - Enhanced to accept any date format
+    function extractDate(input) {
+      const cleanInput = input.toLowerCase().replace(/[^\w\s]/g, ' ').trim();
+      
+      // Immediate date keywords
+      if (cleanInput.match(/\b(today|now)\b/)) return 'Today';
+      if (cleanInput.match(/\b(tomorrow|tmrw)\b/)) return 'Tomorrow';
+      if (cleanInput.match(/\b(day after tomorrow)\b/)) return 'Day After Tomorrow';
+      
+      // Days of the week
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      for (const day of days) {
+        if (cleanInput.includes(day.substring(0, 3)) || cleanInput.includes(day)) {
+          return day.charAt(0).toUpperCase() + day.slice(1);
+        }
+      }
+      
+      // Month names with dates - Enhanced to accept any month/day combination
+      const months = {
+        'january': 'January', 'jan': 'January',
+        'february': 'February', 'feb': 'February', 
+        'march': 'March', 'mar': 'March',
+        'april': 'April', 'apr': 'April',
+        'may': 'May',
+        'june': 'June', 'jun': 'June',
+        'july': 'July', 'jul': 'July',
+        'august': 'August', 'aug': 'August',
+        'september': 'September', 'sep': 'September', 'sept': 'September',
+        'october': 'October', 'oct': 'October',
+        'november': 'November', 'nov': 'November',
+        'december': 'December', 'dec': 'December'
+      };
+      
+      // Look for month + day patterns (like "may 19", "april 20")
+      for (const [monthKey, monthName] of Object.entries(months)) {
+        const monthDayPattern = new RegExp(`\\b${monthKey}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, 'i');
+        const dayMonthPattern = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+${monthKey}\\b`, 'i');
+        
+        let match = cleanInput.match(monthDayPattern) || cleanInput.match(dayMonthPattern);
+        if (match) {
+          const day = match[1];
+          return `${monthName} ${day}`;
+        }
+      }
+      
+      // Flexible date patterns - Accept any reasonable date format
+      const datePatterns = [
+        /\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/, // 12/25, 12-25, 12/25/2024
+        /\b(\d{1,2})(?:st|nd|rd|th)\b/,                     // 19th, 20th, 1st
+        /\b(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\b/        // 2024/12/25
+      ];
+      
+      for (const pattern of datePatterns) {
+        const match = cleanInput.match(pattern);
+        if (match) {
+          return match[0].replace(/st|nd|rd|th/g, ''); // Clean up ordinals
+        }
+      }
+      
+      // If nothing else matches, accept anything that looks like a date
+      // This makes the system very permissive
+      const anyDatePattern = /\b\d{1,2}[\s\-\/]\w+|\w+[\s\-\/]\d{1,2}\b/;
+      const anyMatch = cleanInput.match(anyDatePattern);
+      if (anyMatch) {
+        return anyMatch[0];
+      }
+      
+      return null;
+    }
+
+    // Extract time from user input - Enhanced to accept any time format
+    function extractTime(input) {
+      const cleanInput = input.toLowerCase().replace(/[^\w\s:\.]/g, ' ').trim();
+      
+      // Enhanced time patterns - Accept many formats
+      const timePatterns = [
+        // Standard formats
+        /\b(\d{1,2}):(\d{1,2})\s*(pm|am|p\.?m\.?|a\.?m\.?)\b/i,  // 7:30 PM, 7:30 p.m.
+        /\b(\d{1,2})\s*(pm|am|p\.?m\.?|a\.?m\.?)\b/i,            // 7 PM, 7 p.m.
+        /\b(\d{1,2}):(\d{1,2})\b/,                               // 7:30 (assume PM for restaurant)
+        
+        // Decimal formats like "7.0 p.m"
+        /\b(\d{1,2})\.(\d{1,2})\s*(pm|am|p\.?m\.?|a\.?m\.?)\b/i, // 7.0 PM, 7.30 p.m.
+        /\b(\d{1,2})\.(\d{1,2})\b/,                              // 7.0, 7.30
+        
+        // Special times
+        /\b(noon|midday)\b/i,                                    // noon, midday
+        /\b(midnight)\b/i,                                       // midnight
+        
+        // Time with words
+        /\b(\d{1,2})\s*(?:o'?clock|oclock|clock)\b/i,           // 7 o'clock, 7 oclock
+        /\b(half past|thirty past)\s+(\d{1,2})\b/i,             // half past 7
+        /\b(\d{1,2})\s+(thirty|half)\b/i,                       // 7 thirty, 7 half
+        /\b(quarter past|fifteen past)\s+(\d{1,2})\b/i,         // quarter past 7
+        /\b(\d{1,2})\s+(fifteen|quarter)\b/i                    // 7 fifteen, 7 quarter
+      ];
+      
+      for (const pattern of timePatterns) {
+        const match = cleanInput.match(pattern);
+        if (match) {
+          let hour, minute = '00', period = '';
+          
+          // Handle special cases
+          if (match[0].includes('noon') || match[0].includes('midday')) {
+            return '12:00 PM';
+          }
+          if (match[0].includes('midnight')) {
+            return '12:00 AM';
+          }
+          
+          // Handle half past, thirty
+          if (match[0].includes('half') || match[0].includes('thirty')) {
+            hour = match[2] || match[1];
+            minute = '30';
+          }
+          // Handle quarter past, fifteen
+          else if (match[0].includes('quarter') || match[0].includes('fifteen')) {
+            hour = match[2] || match[1];
+            minute = '15';
+          }
+          // Handle regular formats
+          else {
+            hour = match[1];
+            minute = match[2] || '00';
+            period = match[3] || '';
+          }
+          
+          // Convert to numbers for validation
+          const hourNum = parseInt(hour);
+          let minuteNum = parseInt(minute);
+          
+          // Validate hour and minute
+          if (hourNum >= 1 && hourNum <= 12 && minuteNum >= 0 && minuteNum <= 59) {
+            // Auto-detect PM for restaurant hours if no period specified
+            if (!period) {
+              period = 'PM'; // Default to PM for restaurant bookings
+            }
+            
+            // Format the time nicely
+            const formattedHour = hourNum.toString();
+            const formattedMinute = minuteNum.toString().padStart(2, '0');
+            let formattedPeriod = period.replace(/\./g, '').toUpperCase();
+            
+            return `${formattedHour}:${formattedMinute} ${formattedPeriod}`;
+          }
+        }
+      }
+      
+      // Word-based times - Enhanced with more options
+      const wordTimes = {
+        // Numbers as words
+        'one': '1:00 PM', 'two': '2:00 PM', 'three': '3:00 PM', 'four': '4:00 PM',
+        'five': '5:00 PM', 'six': '6:00 PM', 'seven': '7:00 PM', 'eight': '8:00 PM', 
+        'nine': '9:00 PM', 'ten': '10:00 PM', 'eleven': '11:00 PM', 'twelve': '12:00 PM',
+        
+        // Time-related words
+        'lunch': '12:00 PM', 'lunchtime': '12:00 PM',
+        'dinner': '7:00 PM', 'dinnertime': '7:00 PM',
+        'evening': '7:00 PM', 'early evening': '6:00 PM', 'late evening': '8:00 PM',
+        'afternoon': '2:00 PM', 'early afternoon': '1:00 PM', 'late afternoon': '4:00 PM',
+        
+        // Combined formats
+        'five thirty': '5:30 PM', 'six thirty': '6:30 PM', 'seven thirty': '7:30 PM',
+        'eight thirty': '8:30 PM', 'nine thirty': '9:30 PM', 'ten thirty': '10:30 PM'
+      };
+      
+      // Check for word-based times
+      for (const [phrase, time] of Object.entries(wordTimes)) {
+        if (cleanInput.includes(phrase)) {
+          return time;
+        }
+      }
+      
+      // Very permissive fallback - if we see any number, try to make it a time
+      const numberMatch = cleanInput.match(/\b(\d{1,2})\b/);
+      if (numberMatch) {
+        const num = parseInt(numberMatch[1]);
+        if (num >= 1 && num <= 12) {
+          return `${num}:00 PM`; // Default to PM for restaurant
+        }
+      }
+      
+      return null;
+    }
+
+    // Extract number of members
+    function extractMembers(input) {
+      const cleanInput = input.toLowerCase();
+      
+      // Number patterns
+      const numberMatch = cleanInput.match(/\b(\d+)\b/) || 
+                         cleanInput.match(/(?:table for|party of)\s*(\d+)/i);
+      if (numberMatch) {
+        const num = parseInt(numberMatch[1]);
+        if (num >= 1 && num <= 20) {
+          return num;
+        }
+      }
+      
+      // Word numbers
+      const wordNumbers = {
+        'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
+      };
+      
+      for (const [word, num] of Object.entries(wordNumbers)) {
+        if (cleanInput.includes(word)) {
+          return num;
+        }
+      }
+      
+      return null;
+    }
+
+    // ENHANCED Speech Recognition Setup - Crystal Clear Voice & Continuous Listening
+    const setupSpeechRecognition = () => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
+        log("❌ Speech recognition not supported. Please use Chrome, Edge, or Safari.", false);
+        const statusEl = document.getElementById('status');
+        if (statusEl) {
+          statusEl.textContent = 'Speech recognition not supported - please use Chrome or Edge browser';
+        }
+        return null;
+      }
+      
+      try {
+        recognition = new SpeechRecognition();
+        
+        // ENHANCED settings for CRYSTAL CLEAR voice recognition
+        recognition.lang = "en-US";
+        recognition.interimResults = true;     // Show partial results for better UX
+        recognition.maxAlternatives = 5;       // More alternatives for better accuracy
+        recognition.continuous = true;         // CONTINUOUS listening - no interruptions
+        
+        // ADVANCED audio settings for better voice clarity
+        if (recognition.serviceURI) {
+          recognition.serviceURI = 'wss://www.google.com/speech-api/v2/recognize';
+        }
+        
+        // Auto-restart on silence - NEVER STOP LISTENING
+        let restartTimeout;
+        let isFirstStart = true;
+        
+        recognition.onstart = () => {
+          console.log('🎤 ENHANCED Speech recognition started - Crystal Clear Mode');
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            if (isFirstStart) {
+              statusEl.textContent = '🎧 MML Restaurant is listening! Speak naturally and clearly...';
+              isFirstStart = false;
+            } else {
+              statusEl.textContent = '🎧 Ready to hear you - Please continue speaking...';
+            }
+            statusEl.className = 'status listening';
+          }
+          
+          // Clear any restart timeout
+          if (restartTimeout) {
+            clearTimeout(restartTimeout);
+          }
+        };
+        
+        recognition.onresult = (event) => {
+          try {
+            let finalTranscript = '';
+            let interimTranscript = '';
+            let confidence = 0;
+            
+            // Process all results with ENHANCED accuracy checking
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const result = event.results[i];
+              const transcript = result[0].transcript;
+              confidence = Math.max(confidence, result[0].confidence || 0.8);
+              
+              if (result.isFinal) {
+                finalTranscript += transcript;
+              } else {
+                interimTranscript += transcript;
+              }
+            }
+            
+            // ENHANCED interim feedback - show what we're hearing
+            if (interimTranscript.trim()) {
+              const statusEl = document.getElementById('status');
+              if (statusEl) {
+                statusEl.textContent = `🎧 Hearing: "${interimTranscript.trim()}" (${Math.round(confidence * 100)}% confident)`;
+                statusEl.className = 'status listening';
+              }
+            }
+            
+            // Process FINAL result with confidence checking
+            if (finalTranscript.trim()) {
+              const cleanTranscript = finalTranscript.trim();
+              console.log(`Final transcript (${Math.round(confidence * 100)}% confidence):`, cleanTranscript);
+              
+              // Log with confidence indicator
+              log(`${cleanTranscript} ${confidence > 0.7 ? '✅' : '⚠️'}`, true);
+              
+              // IMMEDIATE processing - no delays
+              processVoiceInput(cleanTranscript, confidence);
+            }
+            
+          } catch (error) {
+            console.error('Error processing speech result:', error);
+            log('Voice processing error - please try speaking again.', false);
+          }
+        };
+        
+        // ENHANCED error handling - AUTO-RETRY on any issue
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          
+          let errorMessage = '';
+          let shouldRetry = true;
+          
+          switch(event.error) {
+            case 'no-speech':
+              errorMessage = '🤫 Listening... Please speak when ready';
+              break;
+            case 'audio-capture':
+              errorMessage = '🎤 Microphone issue - checking audio...';
+              shouldRetry = false;
+              break;
+            case 'not-allowed':
+              errorMessage = '🚫 Please allow microphone access for voice booking';
+              shouldRetry = false;
+              break;
+            case 'network':
+              errorMessage = '🌐 Network error. Please check your internet connection.';
+              break;
+            case 'service-not-allowed':
+              errorMessage = '❌ Speech service not available. Try refreshing the page.';
+              break;
+            case 'bad-grammar':
+              errorMessage = '🔄 Having trouble understanding. Try speaking more clearly.';
+              break;
+            case 'language-not-supported':
+              errorMessage = '🌍 Language not supported. Using English...';
+              break;
+            default:
+              errorMessage = `❌ Speech error: ${event.error}. Trying again...`;
+          }
+          
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            statusEl.textContent = errorMessage;
+            statusEl.className = 'status';
+          }
+          
+          // Retry listening after a short delay
+          if (shouldRetry && isListening) {
+            setTimeout(() => {
+              if (isListening) {
+                const statusEl = document.getElementById('status');
+                if (statusEl) {
+                  statusEl.textContent = '🔄 Restarting speech recognition...';
+                }
+                startListening();
+              }
+            }, 500);
+          } else if (!shouldRetry) {
+            stopListening();
+          }
+        };
+        
+        // CONTINUOUS listening - AUTO-RESTART always
+        recognition.onend = () => {
+          console.log('🔚 Speech recognition ended - AUTO-RESTARTING...');
+          if (isListening) {
+            // IMMEDIATE restart - no delays for continuous listening
+            restartTimeout = setTimeout(() => {
+              if (isListening) {
+                console.log('🔄 Auto-restarting recognition for continuous listening');
+                try {
+                  recognition.start();
+                } catch (e) {
+                  console.log('Recognition restart handled automatically');
+                }
+              }
+            }, 100); // Very fast restart
+          }
+        };
+        
+        return recognition;
+        
+      } catch (error) {
+        console.error('Failed to setup speech recognition:', error);
+        log('❌ Failed to setup speech recognition. Please refresh the page and try again.', false);
+        return null;
+      }
+    };
+
+    // NEW: Process voice input with confidence scoring
+    function processVoiceInput(transcript, confidence = 1.0) {
+      // Don't process if confidence is too low
+      if (confidence < 0.3) {
+        log('⚠️ Speech not clear enough, please repeat', false);
+        return;
+      }
+      
+      // Check for thank you - auto end call
+      if (transcript.toLowerCase().match(/\b(thank you|thanks|thank|cheers|appreciate)\b/)) {
+        stopListening();
+        speakClearly("Thank you for choosing MML Restaurant! Your reservation is confirmed. We look forward to serving you. Have a wonderful day! Goodbye!");
+        return;
+      }
+      
+      // Generate and speak AI response with enhanced clarity
+      const aiResponse = generateAIResponse(transcript);
+      log(aiResponse, false);
+      speakClearly(aiResponse);
+    }
+
+    // Enhanced start listening function with microphone test
+    const startListening = () => {
+      if (!recognition) {
+        console.error('Speech recognition not initialized');
+        log('❌ Speech recognition not available. Please refresh the page.', false);
+        return;
+      }
+      
+      if (!isListening) {
+        return; // Don't start if we shouldn't be listening
+      }
+      
+      // Test microphone access first
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => {
+          console.log('✅ Microphone access granted');
+          
+          try {
+            // Stop any existing recognition
+            try {
+              recognition.stop();
+            } catch (e) {
+              // Ignore stop errors
+            }
+            
+            // Start recognition
+            recognition.start();
+            console.log('🎤 Starting speech recognition...');
+            
+          } catch (error) {
+            console.error('Recognition start error:', error);
+            
+            if (error.name === 'InvalidStateError') {
+              // Recognition is already running, just update status
+              console.log('Recognition already running');
+              const statusEl = document.getElementById('status');
+              if (statusEl) {
+                statusEl.textContent = '🎧 Already listening... Please speak!';
+                statusEl.className = 'status listening';
+              }
+            } else {
+              const statusEl = document.getElementById('status');
+              if (statusEl) {
+                statusEl.textContent = '❌ Could not start listening. Try again.';
+                statusEl.className = 'status';
+              }
+              
+              // Try to restart after a delay
+              if (isListening) {
+                setTimeout(() => {
+                  if (isListening) {
+                    console.log('Retrying speech recognition...');
+                    startListening();
+                  }
+                }, 500);
+              }
+            }
+          }
+        })
+        .catch((error) => {
+          console.error('Microphone access error:', error);
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            if (error.name === 'NotAllowedError') {
+              statusEl.textContent = '🚫 Microphone access denied. Please allow microphone access and refresh the page.';
+              log('To fix microphone access: Click the 🔒 lock icon in your browser address bar, allow microphone access, then refresh the page.', false);
+            } else if (error.name === 'NotFoundError') {
+              statusEl.textContent = '🎤 No microphone found. Please connect a microphone and try again.';
+            } else {
+              statusEl.textContent = `🎤 Microphone error: ${error.message}`;
+            }
+            statusEl.className = 'status';
+          }
+          stopListening();
+        });
+    };
+
+    // Test microphone functionality
+    async function testMicrophone() {
+      const statusEl = document.getElementById('status');
+      if (statusEl) {
+        statusEl.textContent = '🎤 Testing microphone...';
+        statusEl.className = 'status';
+      }
+      
+      try {
+        // Request microphone permission
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        
+        log('✅ Microphone access granted! Now testing speech recognition...', false);
+        
+        if (statusEl) {
+          statusEl.textContent = '✅ Microphone working! Testing speech recognition...';
+          statusEl.className = 'status listening';
+        }
+        
+        // Test speech recognition
+        if (!recognition) {
+          setupSpeechRecognition();
+        }
+        
+        if (recognition) {
+          let testCompleted = false;
+          
+          const timeout = setTimeout(() => {
+            if (!testCompleted) {
+              recognition.stop();
+              if (statusEl) {
+                statusEl.textContent = '⏰ Speech test timeout. Your microphone works, but try speaking louder.';
+                statusEl.className = 'status';
+              }
+              log('Speech recognition test timed out. Your microphone is working, but speech recognition may need adjustment.', false);
+            }
+          }, 5000);
+          
+          recognition.onresult = (event) => {
+            testCompleted = true;
+            clearTimeout(timeout);
+            const transcript = event.results[0][0].transcript;
+            log(`✅ Microphone test successful! I heard: "${transcript}"`, false);
+            
+            if (statusEl) {
+              statusEl.textContent = '✅ Perfect! Your microphone and speech recognition are working!';
+              statusEl.className = 'status';
+            }
+            
+            recognition.stop();
+          };
+          
+          recognition.onerror = (event) => {
+            testCompleted = true;
+            clearTimeout(timeout);
+            console.error('Speech recognition test error:', event.error);
+            
+            if (statusEl) {
+              statusEl.textContent = `❌ Speech test failed: ${event.error}. Your microphone works but speech recognition has issues.`;
+              statusEl.className = 'status';
+            }
+            
+            log(`Speech recognition test failed: ${event.error}. Your microphone is working, but there's a speech recognition issue.`, false);
+          };
+          
+          if (statusEl) {
+            statusEl.textContent = '🎧 Say "Hello" to test your microphone and speech recognition...';
+            statusEl.className = 'status listening';
+          }
+          
+          log('🎧 Please say "Hello" to test your microphone and speech recognition...', false);
+          recognition.start();
+          
+        } else {
+          if (statusEl) {
+            statusEl.textContent = '❌ Speech recognition not available';
+            statusEl.className = 'status';
+          }
+          log('❌ Speech recognition could not be initialized', false);
+        }
+        
+        // Stop the stream after test
+        setTimeout(() => {
+          stream.getTracks().forEach(track => track.stop());
+        }, 10000);
+        
+      } catch (error) {
+        console.error('Microphone test failed:', error);
+        
+        if (error.name === 'NotAllowedError') {
+          if (statusEl) {
+            statusEl.textContent = '❌ Microphone access denied. Please allow microphone access.';
+            statusEl.className = 'status';
+          }
+          log('❌ Microphone access denied. To fix this:', false);
+          log('1. Click the 🔒 lock icon in your browser address bar', false);
+          log('2. Allow microphone access', false);
+          log('3. Refresh the page and try again', false);
+        } else if (error.name === 'NotFoundError') {
+          if (statusEl) {
+            statusEl.textContent = '❌ No microphone found. Please connect a microphone.';
+            statusEl.className = 'status';
+          }
+          log('❌ No microphone detected. Please connect a microphone and try again.', false);
+        } else {
+          if (statusEl) {
+            statusEl.textContent = `❌ Microphone test failed: ${error.message}`;
+            statusEl.className = 'status';
+          }
+          log(`❌ Microphone test failed: ${error.message}`, false);
+        }
+      }
+    }
+
+    // Stop listening function
+    const stopListening = () => {
+      isListening = false;
+      if (recognition) {
+        recognition.stop();
+      }
+      document.getElementById('start').disabled = false;
+      document.getElementById('stop').disabled = true;
+      document.getElementById('status').textContent = 'Voice chat stopped';
+      document.getElementById('status').className = 'status';
+    };
+
+    // Enhanced initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('Initializing voice chat application...');
+      
+      // Test browser compatibility
+      if (!('speechSynthesis' in window)) {
+        log('⚠️ Text-to-speech not supported in this browser', false);
+      }
+      
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        log('⚠️ Speech recognition not supported. Please use Chrome, Edge, or Safari.', false);
+        document.getElementById('start').disabled = true;
+        return;
+      }
+      
+      // Setup speech recognition
+      try {
+        setupSpeechRecognition();
+        if (recognition) {
+          log('✅ MML Restaurant booking system ready! Click "Make Reservation" to begin.', false);
+        } else {
+          log('❌ Failed to initialize speech recognition.', false);
+          document.getElementById('start').disabled = true;
+        }
+      } catch (error) {
+        console.error('Initialization error:', error);
+        log('❌ Initialization failed. Please refresh the page.', false);
+        document.getElementById('start').disabled = true;
+      }
+      
+      // Button event listeners with error handling
+      document.getElementById('micTest').onclick = () => {
+        testMicrophone();
+      };
+      
+      document.getElementById('testVoice').onclick = () => {
+        testSelectedVoice();
+      };
+      
+      document.getElementById('start').onclick = async () => {
+        try {
+          // STEP 1: Auto-request microphone permission
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            statusEl.textContent = '🎤 Requesting microphone access for crystal clear conversation...';
+            statusEl.className = 'status';
+          }
+          
+          // Request microphone permission immediately
+          await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              echoCancellation: true,    // Remove echo
+              noiseSuppression: true,    // Remove background noise  
+              autoGainControl: true,     // Auto-adjust volume
+              channelCount: 1,           // Mono for clarity
+              sampleRate: 44100          // High quality sample rate
+            }
+          });
+          
+          if (statusEl) {
+            statusEl.textContent = '✅ Microphone access granted! Setting up crystal clear voice recognition...';
+            statusEl.className = 'status listening';
+          }
+          
+          // STEP 2: Initialize enhanced speech recognition
+          if (!recognition) {
+            recognition = setupSpeechRecognition();
+            if (!recognition) {
+              log('❌ Could not initialize speech recognition.', false);
+              return;
+            }
+          }
+          
+          // STEP 3: Start the enhanced booking system
+          isListening = true;
+          document.getElementById('start').disabled = true;
+          document.getElementById('stop').disabled = false;
+          
+          if (statusEl) {
+            statusEl.textContent = '🎧 MML Restaurant is ready to take your reservation!';
+            statusEl.className = 'status listening';
+          }
+          
+          log("🎤 Crystal clear voice booking started!", false);
+          
+          // Start with enhanced clarity and immediate listening
+          speakClearly("Hello and welcome to MML Restaurant! I'm your voice reservation assistant. To book your table, may I please have your name?");
+          
+          // Initialize reservation system
+          reservationStep = RESERVATION_STEPS.NAME;
+          
+        } catch (error) {
+          console.error('Start button error:', error);
+          
+          const statusEl = document.getElementById('status');
+          if (error.name === 'NotAllowedError') {
+            log('❌ Microphone access denied. Please click the 🔒 icon in your address bar and allow microphone access.', false);
+            if (statusEl) {
+              statusEl.textContent = '🚫 Please allow microphone access to make your reservation';
+              statusEl.className = 'status';
+            }
+          } else {
+            log('❌ Failed to start voice booking. Please try again.', false);
+            if (statusEl) {
+              statusEl.textContent = '❌ Voice booking failed - please try again';
+              statusEl.className = 'status';
+            }
+          }
+          
+          isListening = false;
+          document.getElementById('start').disabled = false;
+          document.getElementById('stop').disabled = true;
+        }
+      };
+      
+      document.getElementById('stop').onclick = () => {
+        try {
+          stopListening();
+        } catch (error) {
+          console.error('Stop button error:', error);
+          // Force stop
+          isListening = false;
+          document.getElementById('start').disabled = false;
+          document.getElementById('stop').disabled = true;
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            statusEl.textContent = 'Voice chat stopped';
+            statusEl.className = 'status';
+          }
+        }
+      };
+      
+      document.getElementById('clear').onclick = () => {
+        try {
+          const logEl = document.getElementById('log');
+          if (logEl) {
+            logEl.innerHTML = '';
+          }
+          conversationHistory = [];
+          // Reset reservation system
+          reservationStep = RESERVATION_STEPS.GREETING;
+          customerData = { name: null, date: null, time: null, members: null, specialRequests: null };
+          log("Chat cleared! Ready for a new reservation.", false);
+        } catch (error) {
+          console.error('Clear button error:', error);
+        }
+      };
+    });
+
+    // Handle page visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && isListening) {
+        stopListening();
+      }
+    });
+  </script>
+</body>
+</html>
