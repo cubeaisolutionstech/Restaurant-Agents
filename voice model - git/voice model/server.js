@@ -1,6 +1,7 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
+const axios = require('axios');
 
 const app = express();
 app.use(express.json());
@@ -10,6 +11,48 @@ app.use(cors());
 const MONGODB_URI = 'mongodb://localhost:27017';
 const DB_NAME = 'mml_restaurant';
 const COLLECTION_NAME = 'reservations';
+
+// Google Gemini API Key
+const GEMINI_API_KEY = 'AIzaSyC6iDlpE0wCFaWzNydgjWLvp7lqxbowr64';
+
+// Utility: Extract reservation details from Gemini response
+function extractReservationDetails(geminiText) {
+  const nameMatch = geminiText.match(/(?:name is|I am|I'm|This is|Call me)\s+([A-Za-z][A-Za-z\s]{1,30})/i);
+  const dateMatch = geminiText.match(/(?:on|for|date)\s+([A-Za-z0-9 ,]+)/i);
+  const timeMatch = geminiText.match(/(?:at|time)\s+([0-9:apm ]+)/i);
+  const membersMatch = geminiText.match(/(?:for|party of|table for)\s+(\d+)/i);
+  return {
+    name: nameMatch ? nameMatch[1].trim() : null,
+    date: dateMatch ? dateMatch[1].trim() : null,
+    time: timeMatch ? timeMatch[1].trim() : null,
+    members: membersMatch ? membersMatch[1].trim() : null
+  };
+}
+
+// POST /gemini - get dynamic AI response from Gemini and extract details
+app.post('/gemini', async (req, res) => {
+  try {
+    const userInput = req.body.input;
+    const geminiResponse = await axios.post(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+      {
+        contents: [{ parts: [{ text: userInput }] }]
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': GEMINI_API_KEY
+        }
+      }
+    );
+    const geminiText = geminiResponse.data.candidates[0]?.content?.parts[0]?.text || '';
+    const details = extractReservationDetails(geminiText);
+    res.json({ response: geminiText, details });
+  } catch (error) {
+    console.error('Gemini API error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to get Gemini response.' });
+  }
+});
 
 // POST endpoint to save reservations
 app.post('/api/reservations', async (req, res) => {
