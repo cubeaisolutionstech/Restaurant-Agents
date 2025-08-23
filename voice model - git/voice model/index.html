@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -695,7 +695,7 @@ app.listen(3000, () => {
     // Confirmation Modal Functions
     const showConfirmationModal = (reservationData) => {
       // Fill in the modal with reservation details
-      document.getElementById('confirmName').textContent = reservationData.name || '--';
+      document.getElementById('confirmName').textContent = reservationData.name ;
       document.getElementById('confirmDate').textContent = reservationData.date || '--';
       document.getElementById('confirmTime').textContent = reservationData.time || '--';
       document.getElementById('confirmMembers').textContent = reservationData.members || '--';
