@@ -1,0 +1,1468 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MML Restaurant Table Booking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Pacifico&display=swap" rel="stylesheet">
+  <style>
+    /* Existing styles remain unchanged */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      background: linear-gradient(120deg, #fff8f0 0%, #ffe5d9 100%);
+      color: #3d2c2c;
+      margin: 0;
+      min-height: 100vh;
+      -webkit-text-size-adjust: 100%;
+    }
+    .navbar {
+      background: #b85c38;
+      color: #fff;
+      padding: 18px 0;
+      text-align: center;
+      font-family: 'Pacifico', cursive;
+      font-size: 2.2rem;
+      letter-spacing: 2px;
+      box-shadow: 0 2px 8px #b85c3866;
+    }
+    .hero {
+      background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80') center/cover no-repeat;
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0 0 32px 32px;
+      box-shadow: 0 4px 24px #b85c3844;
+      margin-bottom: 32px;
+      position: relative;
+    }
+    .hero-overlay {
+      background: rgba(184, 92, 56, 0.55);
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 0 0 32px 32px;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      color: #fff;
+      text-align: center;
+      font-size: 2.1rem;
+      font-family: 'Pacifico', cursive;
+      letter-spacing: 1.5px;
+      text-shadow: 0 2px 12px #b85c38;
+      padding: 0 20px;
+    }
+    .main-layout {
+      display: flex;
+      gap: 32px;
+      max-width: 1200px;
+      margin: -60px auto 32px auto;
+      position: relative;
+      z-index: 2;
+      align-items: flex-start;
+      padding: 0 16px;
+    }
+    .locations-box {
+      flex: 1 1 320px;
+      background: #ffe5d9;
+      border-radius: 24px;
+      box-shadow: 0 8px 32px #b85c3822;
+      border: 2px solid #b85c38;
+      padding: 32px 24px;
+      min-width: 280px;
+      max-width: 350px;
+      margin-bottom: 24px;
+      font-family: 'Montserrat', Arial, sans-serif;
+      color: #3d2c2c;
+    }
+    .locations-box h2 {
+      color: #b85c38;
+      font-family: 'Pacifico', cursive;
+      font-size: 1.5rem;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .locations-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .locations-list li {
+      margin-bottom: 18px;
+      padding: 18px 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px #b85c3844;
+      font-size: 1.15rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      background: linear-gradient(90deg, #ffe5d9 60%, #fff3e0 100%);
+      position: relative;
+      transition: box-shadow 0.3s, transform 0.2s;
+      border: 2px solid #b85c38;
+    }
+    .branch-icon {
+      font-size: 2.2rem;
+      margin-right: 10px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 4px #b85c3844);
+    }
+    .branch-details {
+      flex: 1;
+    }
+    .branch-name {
+      font-size: 1.18rem;
+      font-weight: bold;
+      color: #b85c38;
+      font-family: 'Pacifico', cursive;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+    .branch-address {
+      font-size: 1rem;
+      color: #3d2c2c;
+      margin-bottom: 6px;
+    }
+    .map-btn {
+      background: #b85c38;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 4px 12px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.2s;
+    }
+    .container {
+      flex: 2 1 500px;
+      background: #fff;
+      border-radius: 24px;
+      padding: 36px;
+      box-shadow: 0 8px 32px #b85c3822;
+      border: 2px solid #b85c38;
+      max-width: 700px;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 2;
+    }
+    @media (max-width: 900px) {
+      .main-layout {
+        flex-direction: column;
+        gap: 0;
+        margin-top: -40px;
+      }
+      .container, .locations-box {
+        max-width: 100%;
+        margin: 0 0 24px 0;
+        padding: 20px;
+      }
+      .hero-content {
+        font-size: 1.5rem;
+      }
+      .navbar {
+        font-size: 1.8rem;
+      }
+      button {
+        font-size: 14px !important;
+        padding: 12px 20px !important;
+      }
+      .controls {
+        flex-wrap: wrap;
+      }
+      .voice-settings {
+        font-size: 14px;
+      }
+    }
+    @media (max-width: 480px) {
+      .container {
+        padding: 15px;
+      }
+      .hero {
+        min-height: 180px;
+      }
+      .hero-content {
+        font-size: 1.2rem;
+      }
+      h1 {
+        font-size: 1.8rem !important;
+      }
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 18px;
+      font-size: 2.3rem;
+      color: #b85c38;
+      font-family: 'Pacifico', cursive;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 8px #b85c3844;
+    }
+    .controls {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    button {
+      padding: 15px 25px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      background: linear-gradient(90deg, #1a2940 0%, #253858 100%);
+      color: #fff;
+      -webkit-appearance: none;
+      touch-action: manipulation;
+    }
+    button:hover {
+      background: #f4b400;
+      color: #253858;
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .status {
+      text-align: center;
+      font-size: 16px;
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 20px;
+      background: #253858;
+      color: #fff;
+      border: 1px solid #f4b400;
+    }
+    .listening {
+      animation: pulse 1.5s infinite;
+      background: rgba(96, 111, 132, 0.3) !important;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    .log {
+      margin-top: 20px;
+      padding: 20px;
+      background: #fff;
+      color: #253858;
+      border-radius: 20px;
+      border: 1px solid #253858;
+      max-height: 400px;
+      overflow-y: auto;
+      line-height: 1.6;
+      -webkit-overflow-scrolling: touch;
+    }
+    .message {
+      margin: 15px 0;
+      padding: 10px 15px;
+      border-radius: 15px;
+      word-wrap: break-word;
+    }
+    .user-message {
+      background: #f6f8fa;
+      color: #253858;
+      border: 1px solid #f4b400;
+      margin-left: 20px;
+      border-bottom-right-radius: 5px;
+    }
+    .ai-message {
+      background: #253858;
+      color: #fff;
+      border: 1px solid #f4b400;
+      margin-right: 20px;
+      border-bottom-left-radius: 5px;
+    }
+    .voice-settings {
+      margin: 20px 0;
+      padding: 15px;
+      background: #4a5d7c;
+      color: #fff;
+      border-radius: 20px;
+      border: 1px solid #f4b400;
+    }
+    .voice-settings label {
+      display: block;
+      margin: 10px 0 5px 0;
+      font-weight: bold;
+      color: #f4b400;
+    }
+    .voice-settings select, .voice-settings input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #f4b400;
+      background: #fff;
+      color: #253858;
+      margin-bottom: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      -webkit-appearance: none;
+    }
+    .mobile-recording-indicator {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(37, 56, 88, 0.95);
+      color: white;
+      padding: 30px;
+      border-radius: 20px;
+      text-align: center;
+      z-index: 10000;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .mobile-recording-indicator.active {
+      display: block;
+    }
+    .recording-animation {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      border: 4px solid #f4b400;
+      border-radius: 50%;
+      animation: recordPulse 1.5s infinite;
+    }
+    @keyframes recordPulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .text-input-fallback {
+      display: none;
+      margin: 20px 0;
+      padding: 20px;
+      background: #f6f8fa;
+      border-radius: 15px;
+      border: 2px solid #b85c38;
+    }
+    .text-input-fallback.show {
+      display: block;
+    }
+    .text-input-field {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #b85c38;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .text-submit-btn {
+      background: #b85c38;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 9999;
+      backdrop-filter: blur(8px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .confirmation-modal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      padding: 35px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+      max-width: 550px;
+      width: 90%;
+      color: white;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      min-height: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-title {
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .reservation-details {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 25px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 1.1rem;
+    }
+    .detail-label {
+      font-weight: bold;
+      color: #e0e0e0;
+    }
+    .detail-value {
+      color: #fff;
+      text-align: right;
+      max-width: 60%;
+      word-wrap: break-word;
+    }
+    .modal-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+    .modal-button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 120px;
+    }
+    .confirm-btn {
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      color: white;
+    }
+    .edit-btn {
+      background: linear-gradient(45deg, #ff9800, #f57c00);
+      color: white;
+    }
+    .modal-overlay.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">MML Restaurant</div>
+  <div class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">Welcome to MML Restaurant<br>Book Your Table Instantly</div>
+  </div>
+  
+  <!-- Mobile Recording Indicator -->
+  <div class="mobile-recording-indicator" id="mobileRecordingIndicator">
+    <div class="recording-animation"></div>
+    <h3>🎤 Listening...</h3>
+    <p>Speak your reservation details</p>
+    <button onclick="stopMobileRecording()">Stop Recording</button>
+  </div>
+  
+  <div class="main-layout">
+    <div class="locations-box">
+      <h2>Our Locations</h2>
+      <ul class="locations-list">
+        <li>
+          <span class="branch-icon">🍽️</span>
+          <div class="branch-details">
+            <div class="branch-name">Main Branch</div>
+            <div class="branch-address">123 Foodie St, City Center</div>
+            <button class="map-btn" onclick="window.open('https://maps.google.com/?q=123+Foodie+St+City+Center', '_blank')">View on Map</button>
+          </div>
+        </li>
+        <li>
+          <span class="branch-icon">🍕</span>
+          <div class="branch-details">
+            <div class="branch-name">Italian Corner</div>
+            <div class="branch-address">45 Pasta Ave, East Side</div>
+            <button class="map-btn" onclick="window.open('https://maps.google.com/?q=45+Pasta+Ave+East+Side', '_blank')">View on Map</button>
+          </div>
+        </li>
+        <li>
+          <span class="branch-icon">🥗</span>
+          <div class="branch-details">
+            <div class="branch-name">Green Garden</div>
+            <div class="branch-address">78 Healthy Rd, North Town</div>
+            <button class="map-btn" onclick="window.open('https://maps.google.com/?q=78+Healthy+Rd+North+Town', '_blank')">View on Map</button>
+          </div>
+        </li>
+        <li>
+          <span class="branch-icon">🍣</span>
+          <div class="branch-details">
+            <div class="branch-name">Sushi Spot</div>
+            <div class="branch-address">22 Ocean Dr, West End</div>
+            <button class="map-btn" onclick="window.open('https://maps.google.com/?q=22+Ocean+Dr+West+End', '_blank')">View on Map</button>
+          </div>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="container">
+      <h1>Table Reservation</h1>
+      
+      <!-- Restaurant Booking Instructions Card -->
+      <div style="background: #ffe5d9; border-radius: 18px; padding: 24px; margin-bottom: 24px; text-align: center; box-shadow: 0 2px 12px #b85c3822; border: 1.5px solid #b85c38;">
+        <h3 style="margin-bottom: 10px; color: #b85c38; font-family: 'Pacifico', cursive; font-size: 1.3rem;">How to Book Your Table</h3>
+        <p style="margin: 5px 0; color: #3d2c2c;"><strong>Voice Booking:</strong> Click "Make Reservation" and speak your details</p>
+        <p style="margin: 5px 0; color: #3d2c2c;"><strong>Text Option:</strong> Type your details if voice isn't working</p>
+        <p style="margin: 5px 0; font-size: 14px; color: #b85c38; opacity: 0.8;">Mobile & Desktop compatible!</p>
+      </div>
+      
+      <!-- Text Input Fallback -->
+      <div class="text-input-fallback" id="textInputFallback">
+        <h4 style="color: #b85c38; margin-bottom: 10px;">Type Your Message:</h4>
+        <input type="text" class="text-input-field" id="textInput" placeholder="Type your reservation details or answer..." />
+        <button class="text-submit-btn" onclick="submitTextInput()">Send Message</button>
+      </div>
+      
+      <div class="voice-settings">
+        <label for="voiceSelect">🔊 AI Voice:</label>
+        <select id="voiceSelect"></select>
+        <button id="testVoice">🔊 Test Voice</button>
+        
+        <label for="speedRange">⚡ Speech Speed:</label>
+        <input type="range" id="speedRange" min="0.5" max="2" step="0.1" value="1">
+        
+        <label for="pitchRange">🎵 Voice Pitch:</label>
+        <input type="range" id="pitchRange" min="0" max="2" step="0.1" value="1">
+      </div>
+
+      <div class="controls">
+        <button id="micTest">🎤 Test Mic</button>
+        <button id="start">🎤 Make Reservation</button>
+        <button id="stop" disabled>⏹️ End Call</button>
+        <button id="clear">🗑️ Clear Chat</button>
+      </div>
+
+      <div class="status" id="status">Welcome! Click "Make Reservation" to start. Voice or text input available!</div>
+
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirmationModal">
+    <div class="confirmation-modal">
+      <h2 class="modal-title">🍽️ Confirm Your Reservation</h2>
+      
+      <div class="reservation-details" id="reservationDetails">
+        <div class="detail-item">
+          <span class="detail-label">👤 Name:</span>
+          <span class="detail-value" id="confirmName">--</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">📅 Date:</span>
+          <span class="detail-value" id="confirmDate">--</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">🕐 Time:</span>
+          <span class="detail-value" id="confirmTime">--</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">👥 Party Size:</span>
+          <span class="detail-value" id="confirmMembers">--</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">📝 Special Requests:</span>
+          <span class="detail-value" id="confirmSpecial">None</span>
+        </div>
+      </div>
+      
+      <div class="modal-buttons">
+        <button class="modal-button edit-btn" id="editReservation">✏️ Edit</button>
+        <button class="modal-button confirm-btn" id="finalConfirm">✅ Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mobile Detection
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    
+    let recognition = null;
+    let isListening = false;
+    let voices = [];
+    let conversationHistory = [];
+    let useFallbackInput = false;
+    
+    // Reservation System Variables
+    let reservationStep = 0;
+    let customerData = {
+      name: null,
+      date: null,
+      time: null,
+      members: null,
+      specialRequests: null
+    };
+
+    const MONGODB_CONFIG = {
+      apiUrl: 'https://mock-api.example.com/api/reservations', // Mock endpoint for testing
+      fallbackToLocal: true,
+      maxRetries: 3,
+      retryDelay: 2000
+    };
+
+    const RESERVATION_STEPS = {
+      GREETING: 0,
+      NAME: 1,
+      DATE: 2,
+      TIME: 3,
+      MEMBERS: 4,
+      SPECIAL_REQUESTS: 5,
+      CONFIRMATION: 6,
+      COMPLETE: 7
+    };
+    
+    // Check microphone permission status
+    async function checkMicrophonePermission() {
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+        return permissionStatus.state === 'granted';
+      } catch (error) {
+        console.error('Permission query failed:', error);
+        return false;
+      }
+    }
+    
+    // Enhanced Mobile Speech Recognition
+    async function setupMobileSpeechRecognition() {
+      try {
+        const SpeechRecognition = window.SpeechRecognition || 
+                                  window.webkitSpeechRecognition || 
+                                  window.mozSpeechRecognition || 
+                                  window.msSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+          console.log('Speech recognition not supported, enabling text fallback');
+          enableTextFallback();
+          return null;
+        }
+        
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 3;
+        
+        recognition.onstart = () => {
+          console.log('Speech recognition started');
+          if (isMobile) {
+            document.getElementById('mobileRecordingIndicator').classList.add('active');
+          }
+          updateStatus('🎧 Listening... Speak now!', true);
+        };
+        
+        recognition.onresult = (event) => {
+          let finalTranscript = '';
+          let interimTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+          
+          if (interimTranscript) {
+            updateStatus(`Hearing: "${interimTranscript}"`, true);
+          }
+          
+          if (finalTranscript) {
+            console.log('Final transcript:', finalTranscript);
+            log(finalTranscript, true);
+            processInput(finalTranscript);
+          }
+        };
+        
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          if (isMobile) {
+            document.getElementById('mobileRecordingIndicator').classList.remove('active');
+          }
+          
+          if (event.error === 'no-speech') {
+            updateStatus('No speech detected. Try again or type your response.');
+          } else if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+            updateStatus('Microphone access denied. Please enable in browser settings or type your response.');
+            enableTextFallback();
+            log('Please allow microphone access: Click the lock icon next to the URL, select "Site Settings," and set Microphone to "Allow".', false);
+            speak('Microphone access was denied. Please allow it in your browser settings or use the text input.');
+          } else if (event.error === 'network') {
+            updateStatus('Network error. Please check connection or type your response.');
+            enableTextFallback();
+          } else {
+            updateStatus(`Voice error: ${event.error}. You can type your response below.`);
+            enableTextFallback();
+          }
+        };
+        
+        recognition.onend = () => {
+          console.log('Speech recognition ended');
+          if (isMobile) {
+            document.getElementById('mobileRecordingIndicator').classList.remove('active');
+          }
+          
+          if (isListening && reservationStep !== RESERVATION_STEPS.CONFIRMATION) {
+            setTimeout(() => restartRecognition(), 100);
+          } else {
+            isListening = false;
+            document.getElementById('start').disabled = false;
+            document.getElementById('stop').disabled = true;
+            updateStatus('Ready to take your reservation!');
+          }
+        };
+        
+        recognition.onspeechend = () => {
+          recognition.stop();
+        };
+        
+        return recognition;
+        
+      } catch (error) {
+        console.error('Failed to setup speech recognition:', error);
+        enableTextFallback();
+        return null;
+      }
+    }
+    
+    // Enable text input fallback
+    function enableTextFallback() {
+      useFallbackInput = true;
+      const fallback = document.getElementById('textInputFallback');
+      if (fallback) {
+        fallback.classList.add('show');
+      }
+      updateStatus('Voice not available. Please type your response below.');
+    }
+    
+    // Submit text input
+    function submitTextInput() {
+      const input = document.getElementById('textInput');
+      if (input && input.value.trim()) {
+        const text = input.value.trim();
+        log(text, true);
+        processInput(text);
+        input.value = '';
+      }
+    }
+    
+    // Stop mobile recording
+    function stopMobileRecording() {
+      if (recognition) {
+        recognition.stop();
+      }
+      document.getElementById('mobileRecordingIndicator').classList.remove('active');
+    }
+    
+    // Restart recognition
+    function restartRecognition() {
+      if (!recognition || !isListening) return;
+      
+      try {
+        recognition.stop();
+        setTimeout(() => {
+          if (isListening && reservationStep !== RESERVATION_STEPS.CONFIRMATION) {
+            recognition.start();
+          }
+        }, 100);
+      } catch (e) {
+        console.log('Recognition restart failed:', e);
+        enableTextFallback();
+      }
+    }
+    
+    // Update status message
+    function updateStatus(message, isListening = false) {
+      const statusEl = document.getElementById('status');
+      if (statusEl) {
+        statusEl.textContent = message;
+        statusEl.className = isListening ? 'status listening' : 'status';
+      }
+    }
+    
+    // Enhanced Voice Loading
+    function loadVoices() {
+      return new Promise((resolve) => {
+        const loadVoiceList = () => {
+          voices = speechSynthesis.getVoices();
+          const voiceSelect = document.getElementById('voiceSelect');
+          
+          if (!voiceSelect) return;
+          
+          voiceSelect.innerHTML = '';
+          
+          if (voices.length === 0) {
+            const option = document.createElement('option');
+            option.value = -1;
+            option.textContent = 'Default Voice';
+            voiceSelect.appendChild(option);
+            resolve();
+            return;
+          }
+          
+          const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+          const otherVoices = voices.filter(v => !v.lang.startsWith('en'));
+          
+          englishVoices.forEach((voice, index) => {
+            const option = document.createElement('option');
+            option.value = voices.indexOf(voice);
+            option.textContent = `${voice.name} (${voice.lang})`;
+            
+            if (isMobile && (voice.name.includes('Google') || voice.name.includes('Microsoft'))) {
+              option.selected = true;
+            }
+            
+            voiceSelect.appendChild(option);
+          });
+          
+          if (otherVoices.length > 0 && englishVoices.length > 0) {
+            const separator = document.createElement('option');
+            separator.disabled = true;
+            separator.textContent = '── Other Languages ──';
+            voiceSelect.appendChild(separator);
+          }
+          
+          otherVoices.forEach((voice) => {
+            const option = document.createElement('option');
+            option.value = voices.indexOf(voice);
+            option.textContent = `${voice.name} (${voice.lang})`;
+            voiceSelect.appendChild(option);
+          });
+          
+          resolve();
+        };
+        
+        if (speechSynthesis.getVoices().length > 0) {
+          loadVoiceList();
+        } else {
+          speechSynthesis.onvoiceschanged = loadVoiceList;
+          setTimeout(loadVoiceList, 100);
+        }
+      });
+    }
+    
+    // Mobile-friendly speak function
+    function speak(text) {
+      return new Promise((resolve) => {
+        if (!('speechSynthesis' in window)) {
+          console.warn('Speech synthesis not supported');
+          updateStatus('Text-to-speech not available');
+          resolve();
+          return;
+        }
+        
+        speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        const voiceSelect = document.getElementById('voiceSelect');
+        const selectedVoiceIndex = voiceSelect ? parseInt(voiceSelect.value) : -1;
+        
+        if (selectedVoiceIndex >= 0 && voices[selectedVoiceIndex]) {
+          utterance.voice = voices[selectedVoiceIndex];
+        }
+        
+        const speedRange = document.getElementById('speedRange');
+        const pitchRange = document.getElementById('pitchRange');
+        utterance.rate = speedRange ? parseFloat(speedRange.value) : 1;
+        utterance.pitch = pitchRange ? parseFloat(pitchRange.value) : 1;
+        utterance.volume = 0.9;
+        
+        utterance.onstart = () => {
+          updateStatus('🗣️ AI is speaking...');
+        };
+        
+        utterance.onend = () => {
+          updateStatus('Ready for your response', isListening);
+          resolve();
+          
+          if (isListening && recognition && reservationStep !== RESERVATION_STEPS.CONFIRMATION) {
+            setTimeout(() => restartRecognition(), 200);
+          }
+        };
+        
+        utterance.onerror = (e) => {
+          console.error('Speech synthesis error:', e);
+          updateStatus('Voice output error');
+          resolve();
+        };
+        
+        if (isMobile) {
+          setTimeout(() => {
+            speechSynthesis.speak(utterance);
+          }, 100);
+        } else {
+          speechSynthesis.speak(utterance);
+        }
+      });
+    }
+    
+    // Test voice function
+    async function testSelectedVoice() {
+      await speak("Hello! This is how I'll sound when taking your reservation.");
+      log('🔊 Testing selected voice', false);
+    }
+    
+    // Process input (voice or text)
+    function processInput(input) {
+      if (!input || input.trim() === '') return;
+      
+      const response = generateAIResponse(input);
+      if (response) {
+        log(response, false);
+        speak(response);
+      }
+    }
+    
+    // Enhanced AI Response Generation
+    function generateAIResponse(userInput) {
+      const input = userInput.toLowerCase().trim();
+      
+      if (input.match(/\b(thank you|thanks|bye|goodbye)\b/)) {
+        stopListening();
+        return "Thank you for choosing MML Restaurant! Your reservation is confirmed. Have a wonderful day!";
+      }
+      
+      const completeData = extractCompleteReservation(input);
+      const extractedFields = Object.values(completeData).filter(v => v !== null).length;
+      
+      // Ensure all required fields (name, date, time, members) are present before jumping to confirmation
+      if (extractedFields >= 4 && reservationStep <= RESERVATION_STEPS.NAME && completeData.name && completeData.date && completeData.time && completeData.members) {
+        Object.assign(customerData, completeData);
+        reservationStep = RESERVATION_STEPS.CONFIRMATION;
+        setTimeout(() => showConfirmationModal(customerData), isMobile ? 500 : 0); // Slight delay for mobile
+        return `I've captured your reservation details for ${customerData.name}. Please review them and say 'yes' to confirm or 'edit' to make changes.`;
+      }
+      
+      switch (reservationStep) {
+        case RESERVATION_STEPS.GREETING:
+        case RESERVATION_STEPS.NAME:
+          const name = extractName(input);
+          if (name) {
+            customerData.name = name;
+            reservationStep = RESERVATION_STEPS.DATE;
+            return `Hello ${name}! What date would you like to reserve a table? For example, say 'tomorrow', 'Friday', or 'October 10th'.`;
+          }
+          return "Welcome to MML Restaurant! May I have your name please?";
+          
+        case RESERVATION_STEPS.DATE:
+          const date = extractDate(input);
+          if (date) {
+            customerData.date = date;
+            reservationStep = RESERVATION_STEPS.TIME;
+            return `Perfect! ${date} it is. What time would you prefer? We're open from 5 PM to 11 PM, for example, '7 PM' or 'evening'.`;
+          }
+          return "What date would you like? You can say 'today', 'tomorrow', 'next Friday', or a specific date.";
+
+        case RESERVATION_STEPS.TIME:
+          const time = extractTime(input);
+          if (time) {
+            customerData.time = time;
+            reservationStep = RESERVATION_STEPS.MEMBERS;
+            return `Great! ${time} on ${customerData.date}. How many people will be dining? For example, 'two' or 'party of four'.`;
+          }
+          return "What time works for you? We're open from 5 PM to 11 PM. Try saying '7 PM' or 'evening'.";
+          
+        case RESERVATION_STEPS.MEMBERS:
+          const members = extractMembers(input);
+          if (members) {
+            customerData.members = members;
+            reservationStep = RESERVATION_STEPS.SPECIAL_REQUESTS;
+            return `Table for ${members}. Any special requests or dietary requirements? For example, 'vegan menu' or 'window seat'.`;
+          }
+          return "How many people will be in your party? Say a number like 'four' or 'party of two'.";
+          
+        case RESERVATION_STEPS.SPECIAL_REQUESTS:
+          customerData.specialRequests = input || "None";
+          reservationStep = RESERVATION_STEPS.CONFIRMATION;
+          setTimeout(() => showConfirmationModal(customerData), isMobile ? 500 : 0); // Slight delay for mobile
+          return `Please review your reservation details for ${customerData.name} and say 'yes' to confirm or 'edit' to make changes.`;
+          
+        case RESERVATION_STEPS.CONFIRMATION:
+          if (input.match(/\b(yes|correct|confirm|ok|okay|book|reserve|sure|yeah|yep)\b/i)) {
+            handleFinalConfirmation();
+            return null;
+          } else if (input.match(/\b(no|change|edit|modify|not right|incorrect)\b/i)) {
+            handleEditReservation();
+            return null;
+          }
+          return "Please say 'yes' to confirm your reservation or 'edit' to make changes.";
+          
+        case RESERVATION_STEPS.COMPLETE:
+          return "Your reservation is complete! Is there anything else I can help you with?";
+          
+        default:
+          reservationStep = RESERVATION_STEPS.NAME;
+          return "Let's start your reservation. What's your name?";
+      }
+    }
+    
+    // Enhanced Extraction Functions
+    function extractCompleteReservation(input) {
+      return {
+        name: extractName(input),
+        date: extractDate(input),
+        time: extractTime(input),
+        members: extractMembers(input),
+        specialRequests: extractSpecialRequests(input)
+      };
+    }
+    
+    function extractName(input) {
+      const patterns = [
+        /(?:my name is|i'm|i am|this is|name)\s+([a-zA-Z][a-zA-Z\s]{1,30})/i,
+        /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/i,
+        /\b([a-zA-Z][a-zA-Z\s]{1,30})\b(?!\btable|reservation|date|time)\b/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = input.match(pattern);
+        if (match) {
+          const name = match[1].trim();
+          if (name.length >= 2 && !name.match(/\b(table|book|reservation|date|time|party|people)\b/i)) {
+            return name.charAt(0).toUpperCase() + name.slice(1);
+          }
+        }
+      }
+      return null;
+    }
+    
+    function extractDate(input) {
+      const lower = input.toLowerCase().trim();
+      const today = new Date();
+      const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+      const months = {
+        january: '01', jan: '01', february: '02', feb: '02', march: '03', mar: '03',
+        april: '04', apr: '04', may: '05', june: '06', jun: '06', july: '07', jul: '07',
+        august: '08', aug: '08', september: '09', sep: '09', october: '10', oct: '10',
+        november: '11', nov: '11', december: '12', dec: '12'
+      };
+
+      // Handle relative dates
+      if (lower.includes('today')) return formatDate(today);
+      if (lower.includes('tomorrow')) return formatDate(tomorrow);
+
+      // Days of the week
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      for (const day of days) {
+        if (lower.includes(day)) {
+          let dayIdx = days.indexOf(day);
+          let todayIdx = today.getDay();
+          let diff = (dayIdx - todayIdx + 7) % 7;
+          if (diff === 0) diff = 7;
+          let target = new Date(today.getTime() + diff * 24 * 60 * 60 * 1000);
+          return formatDate(target);
+        }
+      }
+
+      // Date patterns
+      const patterns = [
+        // YYYY-MM-DD or YYYY/MM/DD
+        /(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/,
+        // MM/DD/YYYY or DD/MM/YYYY
+        /(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/,
+        // Month DD, YYYY
+        /(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\s+(\d{1,2})(?:st|nd|rd|th)?[\s,]+(\d{4})/i,
+        // DD Month YYYY
+        /(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)[\s,]+(\d{4})/i,
+        // Month DD (no year)
+        /(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\s+(\d{1,2})(?:st|nd|rd|th)?/i,
+        // DD Month (no year)
+        /(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)/i,
+        // MM/DD or DD/MM (no year)
+        /(\d{1,2})[\/-](\d{1,2})/
+      ];
+
+      for (const pattern of patterns) {
+        const match = lower.match(pattern);
+        if (match) {
+          if (pattern === patterns[0]) {
+            // YYYY-MM-DD
+            return `${match[1].padStart(4, '0')}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+          } else if (pattern === patterns[1]) {
+            // MM/DD/YYYY
+            return `${match[3].padStart(4, '0')}-${match[1].padStart(2, '0')}-${match[2].padStart(2, '0')}`;
+          } else if (pattern === patterns[2]) {
+            // Month DD, YYYY
+            return `${match[3].padStart(4, '0')}-${months[match[1].toLowerCase()]}-${match[2].padStart(2, '0')}`;
+          } else if (pattern === patterns[3]) {
+            // DD Month YYYY
+            return `${match[3].padStart(4, '0')}-${months[match[2].toLowerCase()]}-${match[1].padStart(2, '0')}`;
+          } else if (pattern === patterns[4]) {
+            // Month DD (no year)
+            return `${today.getFullYear()}-${months[match[1].toLowerCase()]}-${match[2].padStart(2, '0')}`;
+          } else if (pattern === patterns[5]) {
+            // DD Month (no year)
+            return `${today.getFullYear()}-${months[match[2].toLowerCase()]}-${match[1].padStart(2, '0')}`;
+          } else if (pattern === patterns[6]) {
+            // MM/DD or DD/MM (no year)
+            return `${today.getFullYear()}-${match[1].padStart(2, '0')}-${match[2].padStart(2, '0')}`;
+          }
+        }
+      }
+
+      // Fallback for vague inputs
+      if (lower.includes('next month')) {
+        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        return formatDate(nextMonth);
+      }
+
+      return null;
+    }
+
+    function formatDate(date) {
+      return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    }
+    
+    function extractTime(input) {
+      const patterns = [
+        /\b(\d{1,2}):(\d{2})\s*(pm|am)?\b/i,
+        /\b(\d{1,2})\.(\d{2})\s*(pm|am)?\b/i,
+        /\b(\d{1,2})\s*(pm|am)?\b/i,
+        /\b(\d{1,2})\s*o'?clock\s*(pm|am)?\b/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = input.match(pattern);
+        if (match) {
+          let hour = parseInt(match[1]);
+          let minute = match[2] || '00';
+          let period = match[3] || (hour >= 12 ? 'PM' : 'PM'); // Default to PM for restaurant hours
+          
+          if (hour > 12) {
+            hour -= 12;
+            period = 'PM';
+          } else if (hour < 1) {
+            hour = 12;
+          }
+          
+          return `${hour}:${minute.padStart(2, '0')} ${period.toUpperCase()}`;
+        }
+      }
+      
+      const wordTimes = {
+        'noon': '12:00 PM',
+        'midnight': '12:00 AM',
+        'morning': '10:00 AM',
+        'afternoon': '2:00 PM',
+        'evening': '7:00 PM',
+        'night': '8:00 PM',
+        'seven': '7:00 PM',
+        'eight': '8:00 PM',
+        'nine': '9:00 PM',
+        'dinner': '7:00 PM',
+        'lunch': '12:00 PM'
+      };
+      
+      for (const [word, time] of Object.entries(wordTimes)) {
+        if (input.toLowerCase().includes(word)) {
+          return time;
+        }
+      }
+      
+      return null;
+    }
+    
+    function extractMembers(input) {
+      const patterns = [
+        /(?:for|party of)\s+(\d+)/i,
+        /(\d+)\s+(?:people|persons|guests)/i,
+        /table for (\d+)/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = input.match(pattern);
+        if (match) {
+          const num = parseInt(match[1]);
+          if (num >= 1 && num <= 20) {
+            return num;
+          }
+        }
+      }
+      
+      const wordNumbers = {
+        'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+        'eleven': 11, 'twelve': 12
+      };
+      
+      for (const [word, num] of Object.entries(wordNumbers)) {
+        if (input.toLowerCase().includes(word)) {
+          return num;
+        }
+      }
+      
+      return null;
+    }
+    
+    function extractSpecialRequests(input) {
+      const keywords = ['vegetarian', 'vegan', 'allergy', 'birthday', 'anniversary', 'window', 'quiet', 'gluten-free', 'high chair', 'booth'];
+      for (const keyword of keywords) {
+        if (input.toLowerCase().includes(keyword)) {
+          return input;
+        }
+      }
+      return input || "None";
+    }
+    
+    // Logging function
+    function log(message, isUser = false) {
+      const logDiv = document.getElementById('log');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+      messageDiv.innerHTML = `<strong>${isUser ? '👤 You:' : '🤖 AI:'}</strong> ${message}`;
+      logDiv.appendChild(messageDiv);
+      logDiv.scrollTop = logDiv.scrollHeight;
+      
+      conversationHistory.push({
+        role: isUser ? 'user' : 'assistant',
+        content: message,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Show confirmation modal
+    function showConfirmationModal(data) {
+      document.getElementById('confirmName').textContent = data.name || '--';
+      document.getElementById('confirmDate').textContent = data.date || '--';
+      document.getElementById('confirmTime').textContent = data.time || '--';
+      document.getElementById('confirmMembers').textContent = data.members || '--';
+      document.getElementById('confirmSpecial').textContent = data.specialRequests || 'None';
+      
+      const modal = document.getElementById('confirmationModal');
+      modal.classList.add('show');
+      
+      if (recognition && isListening) {
+        recognition.stop();
+        isListening = false;
+        document.getElementById('start').disabled = false;
+        document.getElementById('stop').disabled = true;
+      }
+    }
+    
+    // Hide confirmation modal
+    function hideConfirmationModal() {
+      const modal = document.getElementById('confirmationModal');
+      modal.classList.remove('show');
+      
+      if (isListening && reservationStep !== RESERVATION_STEPS.COMPLETE) {
+        setTimeout(() => restartRecognition(), 300);
+      }
+    }
+    
+    // Handle final confirmation
+    async function handleFinalConfirmation() {
+      hideConfirmationModal();
+      
+      const saved = await saveReservation(customerData);
+      
+      if (saved) {
+        const confirmationNumber = `MML-${Date.now()}`;
+        reservationStep = RESERVATION_STEPS.COMPLETE;
+        const message = `Wonderful! Your reservation is confirmed. Confirmation number: ${confirmationNumber}. See you on ${customerData.date} at ${customerData.time}!`;
+        log(message, false);
+        speak(message);
+      } else {
+        log('Reservation saved locally. Will sync when connection is available.', false);
+        speak('Your reservation is confirmed and saved locally.');
+      }
+    }
+    
+    // Handle edit reservation
+    function handleEditReservation() {
+      hideConfirmationModal();
+      reservationStep = RESERVATION_STEPS.NAME;
+      customerData = { name: null, date: null, time: null, members: null, specialRequests: null };
+      const message = "Let's start over. What's your name?";
+      log(message, false);
+      speak(message);
+    }
+    
+    // Save reservation with retry logic
+    async function saveReservation(data) {
+      let retries = MONGODB_CONFIG.maxRetries;
+      while (retries > 0) {
+        try {
+          const response = await fetch(MONGODB_CONFIG.apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...data,
+              timestamp: new Date().toISOString(),
+              confirmation: `MML-${Date.now()}`,
+              status: 'Confirmed'
+            })
+          });
+          
+          if (response.ok) {
+            console.log('Saved to MongoDB');
+            return true;
+          }
+        } catch (error) {
+          console.error(`MongoDB save failed (attempt ${MONGODB_CONFIG.maxRetries - retries + 1}):`, error);
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, MONGODB_CONFIG.retryDelay));
+            continue;
+          }
+        }
+      }
+      
+      if (MONGODB_CONFIG.fallbackToLocal) {
+        const reservations = JSON.parse(localStorage.getItem('mml_reservations') || '[]');
+        reservations.push({
+          ...data,
+          timestamp: new Date().toISOString(),
+          confirmation: `MML-${Date.now()}`,
+          needsSync: true
+        });
+        localStorage.setItem('mml_reservations', JSON.stringify(reservations));
+        console.log('Saved to localStorage');
+        return true;
+      }
+      
+      return false;
+    }
+    
+    // Start listening
+    async function startListening() {
+      try {
+        const hasPermission = await checkMicrophonePermission();
+        if (!hasPermission) {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+        
+        if (!recognition) {
+          recognition = await setupMobileSpeechRecognition();
+        }
+        
+        if (!recognition && !useFallbackInput) {
+          enableTextFallback();
+          return;
+        }
+        
+        isListening = true;
+        document.getElementById('start').disabled = true;
+        document.getElementById('stop').disabled = false;
+        
+        log('🎤 Voice booking started!', false);
+        await speak("Welcome to MML Restaurant! I'm your booking assistant. What's your name?");
+        
+        reservationStep = RESERVATION_STEPS.NAME;
+        
+        if (recognition) {
+          recognition.start();
+        }
+        
+      } catch (error) {
+        console.error('Start error:', error);
+        enableTextFallback();
+        updateStatus('Microphone not available. Please type your response.');
+        log('Please check your microphone permissions in browser settings.', false);
+        speak('Microphone access is not available. Please enable it in your browser settings or use the text input.');
+      }
+    }
+    
+    // Stop listening
+    function stopListening() {
+      isListening = false;
+      if (recognition) {
+        recognition.stop();
+      }
+      document.getElementById('start').disabled = false;
+      document.getElementById('stop').disabled = true;
+      updateStatus('Booking stopped');
+    }
+    
+    // Test microphone
+    async function testMicrophone() {
+      try {
+        const hasPermission = await checkMicrophonePermission();
+        if (!hasPermission) {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+        log('✅ Microphone working!', false);
+        updateStatus('✅ Microphone test successful!');
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+      } catch (error) {
+        log('❌ Microphone not available. Please check browser settings.', false);
+        enableTextFallback();
+        updateStatus('Microphone access denied. Please enable in browser settings.');
+        speak('Microphone access was denied. Please allow it in your browser settings.');
+      }
+    }
+    
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', async () => {
+      console.log(`Initializing... Mobile: ${isMobile}, iOS: ${isIOS}, Android: ${isAndroid}`);
+      
+      await loadVoices();
+      
+      recognition = await setupMobileSpeechRecognition();
+      
+      if (!recognition) {
+        console.log('Speech recognition not available, text input enabled');
+        enableTextFallback();
+      }
+      
+      document.getElementById('micTest').onclick = testMicrophone;
+      document.getElementById('testVoice').onclick = testSelectedVoice;
+      document.getElementById('start').onclick = startListening;
+      document.getElementById('stop').onclick = stopListening;
+      document.getElementById('clear').onclick = () => {
+        document.getElementById('log').innerHTML = '';
+        conversationHistory = [];
+        customerData = { name: null, date: null, time: null, members: null, specialRequests: null };
+        reservationStep = RESERVATION_STEPS.GREETING;
+        log('Chat cleared!', false);
+      };
+      
+      document.getElementById('finalConfirm').onclick = handleFinalConfirmation;
+      document.getElementById('editReservation').onclick = handleEditReservation;
+      
+      document.getElementById('textInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          submitTextInput();
+        }
+      });
+      
+      if (!await checkMicrophonePermission()) {
+        log('To avoid repeated permission prompts, please set Microphone to "Allow" in your browser settings: Click the lock icon next to the URL and select "Site Settings".', false);
+      }
+      
+      log('✅ MML Restaurant booking ready! Voice and text input available.', false);
+      updateStatus('Ready to take your reservation!');
+    });
+    
+    // Handle page visibility
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && recognition) {
+        recognition.stop();
+      }
+    });
+  </script>
+</body>
+</html>
